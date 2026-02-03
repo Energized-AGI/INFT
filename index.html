@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARA Research Passport - 0G Blockchain Viewer</title>
+    <title>DARA Marketplace NFTs - 0G Blockchain Viewer</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -35,6 +35,420 @@
         .nft-card:hover {
             border-color: rgba(96, 165, 250, 0.5);
             box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.3);
+        }
+        .network-badge {
+            background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
+        }
+        .trust-wallet-btn {
+            background: linear-gradient(135deg, #3375bb 0%, #0056b3 100%);
+        }
+        .attribute-tag {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.3);
+        }
+        .verified-badge {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <!-- Header -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">
+                        0G
+                    </div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">DARA Marketplace</h1>
+                        <p class="text-xs text-slate-400">My Purchased Research NFTs</p>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <select id="networkSelect" class="bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-blue-500">
+                        <option value="mainnet">Aristotle Mainnet</option>
+                        <option value="testnet">Galileo Testnet</option>
+                    </select>
+
+                    <button id="connectWallet" class="trust-wallet-btn text-white px-6 py-2 rounded-lg font-medium flex items-center space-x-2 hover:opacity-90 transition-opacity">
+                        <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-13h2v6h-2zm0 8h2v2h-2z"/>
+                        </svg>
+                        <span>Connect Trust Wallet</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Wallet Info Panel -->
+        <div id="walletInfo" class="hidden glass-panel rounded-2xl p-6 mb-8 border border-slate-700">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm text-slate-400 mb-1">Connected Wallet</p>
+                    <p id="walletAddress" class="mono text-lg font-semibold text-blue-400"></p>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">Network</p>
+                        <p id="networkName" class="font-semibold text-purple-400">Aristotle Mainnet</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">Balance</p>
+                        <p id="walletBalance" class="font-semibold text-green-400">-- AOGI</p>
+                    </div>
+                    <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-300 text-sm underline">
+                        Disconnect
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Not Connected State -->
+        <div id="notConnected" class="text-center py-20">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
+                <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
+            <p class="text-slate-400 mb-8 max-w-md mx-auto">Connect your Trust Wallet to view your 5 DARA Marketplace NFTs.</p>
+            <button onclick="connectWallet()" class="trust-wallet-btn text-white px-8 py-3 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity">
+                Connect Trust Wallet
+            </button>
+        </div>
+
+        <!-- Loading State -->
+        <div id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="mt-4 text-slate-400">Loading your NFTs from DARA Marketplace...</p>
+        </div>
+
+        <!-- NFT Grid -->
+        <div id="nftContainer" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white">My DARA NFTs</h2>
+                <span id="nftCount" class="px-3 py-1 rounded-full bg-slate-800 text-sm text-slate-300 border border-slate-700">0 NFTs</span>
+            </div>
+
+            <div id="nftGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- NFTs will be injected here -->
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div id="errorMessage" class="hidden mt-4 p-4 rounded-lg bg-red-900/30 border border-red-700 text-red-200">
+            <p id="errorText"></p>
+        </div>
+    </main>
+
+    <!-- NFT Detail Modal -->
+    <div id="nftModal" class="hidden fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity" aria-hidden="true" onclick="closeModal()"></div>
+            
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            
+            <div class="inline-block align-bottom glass-panel rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-3xl sm:w-full border border-slate-700">
+                <div id="modalContent" class="p-6">
+                    <!-- Content injected via JS -->
+                </div>
+                <div class="bg-slate-800/50 px-6 py-4 flex justify-end space-x-3">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">
+                        Close
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            mainnet: {
+                chainId: '0x4115',
+                chainIdDecimal: 16661,
+                name: '0G-AI (Aristotle)',
+                rpcUrl: 'https://evmrpc.0g.ai',
+                explorer: 'https://chainscan.0g.ai',
+                contracts: {
+                    drp: '0x3156f6e761d7c9da0a88a6165864995f2b58854f',
+                    marketplace: '0x57e463BF845cf328715446b9246fFa536B671A10',
+                    oracle: '0xa4e554b54cF94BfBca0682c34877ee7C96aC9261'
+                }
+            },
+            testnet: {
+                chainId: '0x40da',
+                chainIdDecimal: 16602,
+                name: '0G-Galileo',
+                rpcUrl: 'https://evmrpc-testnet.0g.ai',
+                explorer: 'https://chainscan-testnet.0g.ai',
+                contracts: {
+                    drp: '0x3156f6e761d7c9da0a88a6165864995f2b58854f',
+                    marketplace: '0x57e463BF845cf328715446b9246fFa536B671A10',
+                    oracle: '0xa4e554b54cF94BfBca0682c34877ee7C96aC9261'
+                }
+            }
+        };
+
+        // ABI for DARA Marketplace
+        const MARKETPLACE_ABI = [
+            "function getListingDetails(uint256 listingId) view returns (tuple(uint256 listingId, address seller, address nftContract, uint256 tokenId, uint256 price, uint256 quantity, uint256 totalSupply, bool active, uint256 createdAt), tuple(string title, string category, string researchType, uint256 quality, uint256 citations, string imageUrl, bytes32 verificationHash))",
+            "function listings(uint256) view returns (uint256 listingId, address seller, address nftContract, uint256 tokenId, uint256 price, uint256 quantity, uint256 totalSupply, bool active, uint256 createdAt)"
+        ];
+
+        // ABI for DRP Contract (just for tokenURI)
+        const DRP_ABI = [
+            "function tokenURI(uint256 tokenId) view returns (string)",
+            "function ownerOf(uint256 tokenId) view returns (address)"
+        ];
+
+        // Your known NFTs from DARA Marketplace
+        // Based on your transaction data: Token IDs 1,2,3,4 from listings 1-4, and Token ID 5 from listing 9
+        const MY_NFTS = [
+            {
+                tokenId: "1",
+                listingId: "1",
+                transactionHash: "0x97e08510a036e0607a9cc2dd811cb33b3247d55ba1733748f8aef0047d692064",
+                name: "Zero Knowledge AI Consensus Protocol"
+            },
+            {
+                tokenId: "2",
+                listingId: "2",
+                transactionHash: "0xf3b10318167418c2995c9e96d903156356a7f32f9a50bee3601faf56e6ec6a8b",
+                name: "Decentralized Storage Optimisation"
+            },
+            {
+                tokenId: "3",
+                listingId: "3",
+                transactionHash: "0x76b954075bec3e29ca939d28b816008c28e587375c8a74bcdb720a5f1f6e16c2",
+                name: "Quantum Resistant Blockchain Signatures"
+            },
+            {
+                tokenId: "4",
+                listingId: "4",
+                transactionHash: "0x536664f67d153431c4e7fb09b5d288118aea6c4f0b2dfed1b87ae5968e018d36",
+                name: "Bio Inspired Consensus Mechanisms"
+            },
+            {
+                tokenId: "5",
+                listingId: "9",
+                transactionHash: "0xae7ab735ce14c3e11ce2b912b92da4bf6f00fed09050b82adb42ac0f854eaf97",
+                name: "Welcome To Research NFTs"
+            }
+        ];
+
+        // State
+        let provider;
+        let signer;
+        let currentNetwork = 'mainnet';
+        let userAddress = null;
+        let userNFTs = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('networkSelect').addEventListener('change', (e) => {
+                currentNetwork = e.target.value;
+                if (userAddress) {
+                    loadNFTs();
+                }
+            });
+
+            document.getElementById('connectWallet').addEventListener('click', connectWallet);
+        });
+
+        // Connect Wallet Function
+        async function connectWallet() {
+            try {
+                // Mobile Trust Wallet detection
+                if (!window.ethereum) {
+                    const currentUrl = window.location.href;
+                    const trustWalletDeepLink = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(currentUrl)}`;
+                    window.location.href = trustWalletDeepLink;
+                    return;
+                }
+
+                // Request account access
+                const accounts = await window.ethereum.request({ 
+                    method: 'eth_requestAccounts' 
+                });
+
+                if (accounts.length === 0) {
+                    throw new Error('No accounts found');
+                }
+
+                userAddress = accounts[0].toLowerCase();
+                
+                // Setup provider
+                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+                signer = provider.getSigner();
+
+                // Check and switch network if needed
+                await checkNetwork();
+
+                // Update UI
+                updateWalletUI();
+                
+                // Load NFTs
+                await loadNFTs();
+
+                // Listen for changes
+                window.ethereum.on('accountsChanged', (newAccounts) => {
+                    if (newAccounts.length === 0) {
+                        disconnectWallet();
+                    } else {
+                        userAddress = newAccounts[0].toLowerCase();
+                        updateWalletUI();
+                        loadNFTs();
+                    }
+                });
+
+                window.ethereum.on('chainChanged', () => {
+                    window.location.reload();
+                });
+
+            } catch (error) {
+                showError(error.message);
+                console.error('Connection error:', error);
+            }
+        }
+
+        // Check and switch network
+        async function checkNetwork() {
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            const targetChainId = CONFIG[currentNetwork].chainId;
+            
+            if (chainId !== targetChainId) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: targetChainId }],
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        const network = CONFIG[currentNetwork];
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: targetChainId,
+                                chainName: network.name,
+                                nativeCurrency: {
+                                    name: 'AOGI',
+                                    symbol: 'AOGI',
+                                    decimals: 18
+                                },
+                                rpcUrls: [network.rpcUrl],
+                                blockExplorerUrls: [network.explorer]
+                            }],
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
+            }
+        }
+
+        // Update Wallet UI
+        async function updateWalletUI() {
+            document.getElementById('notConnected').classList.add('hidden');
+            document.getElementById('walletInfo').classList.remove('hidden');
+            
+            document.getElementById('walletAddress').textContent = 
+                `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+            document.getElementById('networkName').textContent = CONFIG[currentNetwork].name;
+            
+            // Get balance
+            const balance = await provider.getBalance(userAddress);
+            const balanceFormatted = ethers.utils.formatEther(balance);
+            document.getElementById('walletBalance').textContent = 
+                `${parseFloat(balanceFormatted).toFixed(4)} AOGI`;
+        }
+
+        // Load NFTs - Display your 5 NFTs with marketplace data
+        async function loadNFTs() {
+            try {
+                document.getElementById('loadingState').classList.remove('hidden');
+                document.getElementById('nftContainer').classList.add('hidden');
+                document.getElementById('nftGrid').innerHTML = '';
+
+                const marketplaceContract = new ethers.Contract(
+                    CONFIG[currentNetwork].contracts.marketplace,
+                    MARKETPLACE_ABI,
+                    provider
+                );
+
+                const drpContract = new ethers.Contract(
+                    CONFIG[currentNetwork].contracts.drp,
+                    DRP_ABI,
+                    provider
+                );
+
+                userNFTs = [];
+
+                // Fetch all 5 NFTs from marketplace
+                for (const nft of MY_NFTS) {
+                    try {
+                        let marketData = null;
+                        let tokenURIData = null;
+
+                        // Try to get marketplace data
+                        try {
+                            marketData = await marketplaceContract.getListingDetails(nft.listingId);
+                        } catch (e) {
+                            console.log(`No marketplace data for listing ${nft.listingId}`);
+                        }
+
+                        // Try to get tokenURI from DRP contract (for Token IDs 1-4)
+                        if (nft.tokenId !== "5") {
+                            try {
+                                tokenURIData = await drpContract.tokenURI(nft.tokenId);
+                            } catch (e) {
+                                console.log(`No tokenURI for token ${nft.tokenId}`);
+                            }
+                        }
+
+                        // Add to display list
+                        userNFTs.push({
+                            ...nft,
+                            marketplaceData: marketData,
+                            tokenURI: tokenURIData
+                        });
+
+                    } catch (error) {
+                        console.error(`Error loading NFT ${nft.tokenId}:`, error);
+                        // Still add it with basic info even if contract calls fail
+                        userNFTs.push({
+                            ...nft,
+                            marketplaceData: null,
+                            tokenURI: null
+                        });
+                    }
+                }
+
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('nftContainer').classList.remove('hidden');
+                
+                renderNFTs();
+
+            } catch (error) {
+                document.getElementById('loadingState').classList.add('hidden');
+                showError('F            box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.3);
         }
         .network-badge {
             background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
@@ -742,3 +1156,4 @@
 </body>
 
 </html>
+
