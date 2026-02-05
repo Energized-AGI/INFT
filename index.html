@@ -3,38 +3,368 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DARA Marketplace NFTs - 0G Blockchain Viewer</title>
+    <title>DARA Research NFTs - 0G Blockchain</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/ethers/5.7.2/ethers.umd.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            min-height: 100vh;
+        body { font-family: 'Inter', sans-serif; background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); min-height: 100vh; }
+        .mono { font-family: 'JetBrains Mono', monospace; }
+        .glass-panel { background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .nft-card { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid rgba(96, 165, 250, 0.2); transition: all 0.3s ease; }
+        .nft-card:hover { border-color: rgba(96, 165, 250, 0.5); box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.3); }
+        .trust-wallet-btn { background: linear-gradient(135deg, #3375bb 0%, #0056b3 100%); }
+        .download-btn { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+        .download-btn:disabled { background: #374151; cursor: not-allowed; opacity: 0.5; }
+        .verify-btn { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #0f172a; }
+        ::-webkit-scrollbar-thumb { background: #3b82f6; border-radius: 4px; }
+    </style>
+</head>
+<body class="text-slate-200">
+
+    <!-- Header -->
+    <header class="glass-panel sticky top-0 z-50 border-b border-slate-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex justify-between items-center">
+                <div class="flex items-center space-x-3">
+                    <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center text-white font-bold text-lg">0G</div>
+                    <div>
+                        <h1 class="text-xl font-bold text-white">DARA Research NFTs</h1>
+                        <p class="text-xs text-slate-400">0G Blockchain Viewer</p>
+                    </div>
+                </div>
+                <button id="connectBtn" class="trust-wallet-btn text-white px-6 py-2 rounded-lg font-medium hover:opacity-90 transition-opacity">
+                    Connect Wallet
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Not Connected -->
+        <div id="notConnected" class="text-center py-20">
+            <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
+                <svg class="w-12 h-12 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold text-white mb-2">Connect Your Wallet</h2>
+            <p class="text-slate-400 mb-8">Connect Trust Wallet to view your DARA Research NFTs</p>
+            <button onclick="connectWallet()" class="trust-wallet-btn text-white px-8 py-3 rounded-xl font-semibold text-lg hover:opacity-90 transition-opacity">
+                Connect Trust Wallet
+            </button>
+        </div>
+
+        <!-- Connected Info -->
+        <div id="walletInfo" class="hidden glass-panel rounded-2xl p-6 mb-8 border border-slate-700">
+            <div class="flex flex-wrap items-center justify-between gap-4">
+                <div>
+                    <p class="text-sm text-slate-400 mb-1">Connected Wallet</p>
+                    <p id="walletAddress" class="mono text-lg font-semibold text-blue-400"></p>
+                </div>
+                <div class="flex items-center space-x-6">
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">Network</p>
+                        <p class="font-semibold text-purple-400">0G-AI (Aristotle)</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-slate-400">Balance</p>
+                        <p id="walletBalance" class="font-semibold text-green-400">-- AOGI</p>
+                    </div>
+                    <button onclick="disconnectWallet()" class="text-red-400 hover:text-red-300 text-sm underline">Disconnect</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loadingState" class="hidden text-center py-12">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+            <p class="mt-4 text-slate-400">Loading your NFTs...</p>
+        </div>
+
+        <!-- NFT Grid -->
+        <div id="nftContainer" class="hidden">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-2xl font-bold text-white">My Research NFTs</h2>
+                <span id="nftCount" class="px-3 py-1 rounded-full bg-slate-800 text-sm text-slate-300 border border-slate-700">0 NFTs</span>
+            </div>
+            <div id="nftGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+        </div>
+
+        <!-- Error -->
+        <div id="errorMessage" class="hidden mt-4 p-4 rounded-lg bg-red-900/30 border border-red-700 text-red-200">
+            <p id="errorText"></p>
+        </div>
+    </main>
+
+    <!-- Modal -->
+    <div id="modal" class="hidden fixed inset-0 z-50 overflow-y-auto">
+        <div class="flex items-center justify-center min-h-screen px-4 pt-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 bg-slate-900 bg-opacity-75 transition-opacity" onclick="closeModal()"></div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom glass-panel rounded-2xl text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-2xl sm:w-full border border-slate-700">
+                <div id="modalContent" class="p-6"></div>
+                <div class="bg-slate-800/50 px-6 py-4 flex justify-end">
+                    <button onclick="closeModal()" class="px-4 py-2 bg-slate-700 hover:bg-slate-600 rounded-lg text-white transition-colors">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Configuration
+        const CONFIG = {
+            chainId: '0x4115',
+            chainIdDecimal: 16661,
+            rpcUrl: 'https://evmrpc.0g.ai',
+            explorer: 'https://chainscan.0g.ai',
+            drpContract: '0x3156f6e761d7c9da0a88a6165864995f2b58854f',
+            marketplaceContract: '0x57e463BF845cf328715446b9246fFa536B671A10',
+            yourAddress: '0x6F4D829488686afd8D9B68AE56986C312784C0e6'.toLowerCase()
+        };
+
+        // ABIs
+        const DRP_ABI = [
+            "function ownerOf(uint256 tokenId) view returns (address)",
+            "function getEncryptedURI(uint256 tokenId) view returns (string)"
+        ];
+
+        const MARKETPLACE_ABI = [
+            "function getListingDetails(uint256 listingId) view returns (tuple(uint256 listingId, address seller, address nftContract, uint256 tokenId, uint256 price, uint256 quantity, uint256 totalSupply, bool active, uint256 createdAt), tuple(string title, string category, string researchType, uint256 quality, uint256 citations, string imageUrl, bytes32 verificationHash))"
+        ];
+
+        // NFT Data Structure
+        const NFT_DATA = [
+            { tokenId: 1, listingId: 1, name: "Zero Knowledge AI Consensus Protocol", txHash: "0x97e08510a036e0607a9cc2dd811cb33b3247d55ba1733748f8aef0047d692064" },
+            { tokenId: 2, listingId: 2, name: "Decentralized Storage Optimisation", txHash: "0xf3b10318167418c2995c9e96d903156356a7f32f9a50bee3601faf56e6ec6a8b" },
+            { tokenId: 3, listingId: 3, name: "Quantum Resistant Blockchain Signatures", txHash: "0x76b954075bec3e29ca939d28b816008c28e587375c8a74bcdb720a5f1f6e16c2" },
+            { tokenId: 4, listingId: 4, name: "Bio-Inspired Consensus Mechanisms", txHash: "0x536664f67d153431c4e7fb09b5d288118aea6c4f0b2dfed1b87ae5968e018d36" },
+            { tokenId: 5, listingId: 9, name: "Welcome To Research NFTs", txHash: "0xae7ab735ce14c3e11ce2b912b92da4bf6f00fed09050b82adb42ac0f854eaf97", isMarketplaceOnly: true }
+        ];
+
+        let provider, signer, userAddress, isVerified = false;
+
+        // Initialize
+        document.getElementById('connectBtn').addEventListener('click', connectWallet);
+
+        async function connectWallet() {
+            try {
+                if (!window.ethereum) {
+                    window.location.href = `https://link.trustwallet.com/open_url?coin_id=60&url=${encodeURIComponent(window.location.href)}`;
+                    return;
+                }
+
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                if (accounts.length === 0) throw new Error('No accounts found');
+
+                userAddress = accounts[0].toLowerCase();
+                provider = new ethers.providers.Web3Provider(window.ethereum, "any");
+                signer = provider.getSigner();
+
+                await checkNetwork();
+                setupEventListeners();
+                updateUI();
+                await loadNFTs();
+
+            } catch (error) {
+                showError(error.message);
+            }
         }
-        .mono {
-            font-family: 'JetBrains Mono', monospace;
+
+        async function checkNetwork() {
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            if (chainId !== CONFIG.chainId) {
+                try {
+                    await window.ethereum.request({
+                        method: 'wallet_switchEthereumChain',
+                        params: [{ chainId: CONFIG.chainId }],
+                    });
+                } catch (switchError) {
+                    if (switchError.code === 4902) {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [{
+                                chainId: CONFIG.chainId,
+                                chainName: '0G-AI',
+                                nativeCurrency: { name: 'AOGI', symbol: 'AOGI', decimals: 18 },
+                                rpcUrls: [CONFIG.rpcUrl],
+                                blockExplorerUrls: [CONFIG.explorer]
+                            }],
+                        });
+                    } else {
+                        throw switchError;
+                    }
+                }
+            }
         }
-        .glass-panel {
-            background: rgba(30, 41, 59, 0.7);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+
+        function setupEventListeners() {
+            window.ethereum.on('accountsChanged', (accounts) => {
+                if (accounts.length === 0) disconnectWallet();
+                else {
+                    userAddress = accounts[0].toLowerCase();
+                    isVerified = false;
+                    updateUI();
+                    loadNFTs();
+                }
+            });
+            window.ethereum.on('chainChanged', () => window.location.reload());
         }
-        .gradient-text {
-            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+
+        async function updateUI() {
+            document.getElementById('notConnected').classList.add('hidden');
+            document.getElementById('walletInfo').classList.remove('hidden');
+            document.getElementById('connectBtn').classList.add('hidden');
+            
+            document.getElementById('walletAddress').textContent = `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+            
+            const balance = await provider.getBalance(userAddress);
+            document.getElementById('walletBalance').textContent = `${parseFloat(ethers.utils.formatEther(balance)).toFixed(4)} AOGI`;
         }
-        .nft-card {
-            background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-            border: 1px solid rgba(96, 165, 250, 0.2);
-            transition: all 0.3s ease;
+
+        async function loadNFTs() {
+            document.getElementById('loadingState').classList.remove('hidden');
+            document.getElementById('nftContainer').classList.add('hidden');
+
+            try {
+                // Verify ownership
+                isVerified = (userAddress === CONFIG.yourAddress);
+                
+                // If address doesn't match, check contract ownership
+                if (!isVerified) {
+                    const drpContract = new ethers.Contract(CONFIG.drpContract, DRP_ABI, provider);
+                    try {
+                        const owner = await drpContract.ownerOf(1);
+                        isVerified = (owner.toLowerCase() === userAddress);
+                    } catch (e) {
+                        isVerified = false;
+                    }
+                }
+
+                // Load NFT data
+                const drpContract = new ethers.Contract(CONFIG.drpContract, DRP_ABI, provider);
+                const marketplaceContract = new ethers.Contract(CONFIG.marketplaceContract, MARKETPLACE_ABI, provider);
+                
+                const nfts = await Promise.all(NFT_DATA.map(async (nft) => {
+                    try {
+                        let metadata = {};
+                        let fileName = 'No file';
+                        let storageCID = '';
+                        let encryptedURI = '';
+
+                        if (nft.isMarketplaceOnly) {
+                            // Token 5 - Marketplace only
+                            try {
+                                const details = await marketplaceContract.getListingDetails(9);
+                                if (details && details[1]) {
+                                    metadata = {
+                                        name: details[1].title,
+                                        description: 'Marketplace listing',
+                                        attributes: []
+                                    };
+                                }
+                            } catch (e) {
+                                console.log('Token 5 marketplace query failed');
+                            }
+                        } else {
+                            // Tokens 1-4 - DRP Contract
+                            try {
+                                encryptedURI = await drpContract.getEncryptedURI(nft.tokenId);
+                                
+                                if (encryptedURI && encryptedURI !== 'test') {
+                                    const parsed = JSON.parse(encryptedURI);
+                                    metadata = parsed;
+                                    const fileAttr = parsed.attributes?.find(a => a.trait_type === 'File Name');
+                                    const cidAttr = parsed.attributes?.find(a => a.trait_type === 'Storage CID');
+                                    if (fileAttr) fileName = fileAttr.value;
+                                    if (cidAttr) storageCID = cidAttr.value;
+                                } else if (encryptedURI === 'test') {
+                                    fileName = 'Test data (no file)';
+                                }
+                            } catch (e) {
+                                console.log(`Token ${nft.tokenId} query failed:`, e.message);
+                            }
+                        }
+
+                        return { ...nft, metadata, fileName, storageCID, encryptedURI };
+                    } catch (error) {
+                        return { ...nft, metadata: {}, fileName: 'Error loading', storageCID: '', encryptedURI: '' };
+                    }
+                }));
+
+                document.getElementById('loadingState').classList.add('hidden');
+                document.getElementById('nftContainer').classList.remove('hidden');
+                renderNFTs(nfts);
+
+            } catch (error) {
+                document.getElementById('loadingState').classList.add('hidden');
+                showError('Failed to load NFTs: ' + error.message);
+            }
         }
-        .nft-card:hover {
-            border-color: rgba(96, 165, 250, 0.5);
-            box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.3);
+
+        function renderNFTs(nfts) {
+            const grid = document.getElementById('nftGrid');
+            grid.innerHTML = '';
+            document.getElementById('nftCount').textContent = `${nfts.length} NFTs`;
+
+            nfts.forEach((nft) => {
+                const card = document.createElement('div');
+                card.className = 'nft-card rounded-xl overflow-hidden';
+                
+                const imageUrl = nft.metadata?.image || 'https://images.unsplash.com/photo-1639322537228-f710d846310a?w=800&q=80';
+                const isLocked = !isVerified;
+
+                card.innerHTML = `
+                    <div class="aspect-video bg-slate-800 relative overflow-hidden">
+                        <img src="${imageUrl}" alt="${nft.name}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1639322537228-f710d846310a?w=800&q=80'">
+                        <div class="absolute top-2 right-2 bg-blue-600 text-white text-xs px-2 py-1 rounded-full font-semibold">#${nft.tokenId}</div>
+                        ${isLocked ? '<div class="absolute top-2 left-2 bg-red-600 text-white text-xs px-2 py-1 rounded-full">Locked</div>' : '<div class="absolute top-2 left-2 bg-green-600 text-white text-xs px-2 py-1 rounded-full">Verified</div>'}
+                    </div>
+                    <div class="p-5">
+                        <h3 class="text-lg font-bold text-white mb-1">${nft.name}</h3>
+                        <p class="text-sm text-slate-400 mb-3">${nft.isMarketplaceOnly ? 'Marketplace Only' : `File: ${nft.fileName}`}</p>
+                        
+                        <div class="space-y-2">
+                            ${isLocked ? `
+                                <button onclick="verifyOwnership()" class="w-full verify-btn hover:opacity-90 text-white py-2 rounded-lg font-medium transition-opacity">
+                                    Verify Ownership
+                                </button>
+                            ` : `
+                                <button onclick="showDownload('${nft.tokenId}', '${nft.fileName}', '${nft.storageCID}', '${nft.txHash}')" ${!nft.storageCID ? 'disabled' : ''} class="w-full download-btn hover:opacity-90 text-white py-2 rounded-lg font-medium transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                                    ${nft.storageCID ? 'Download File' : 'No File Available'}
+                                </button>
+                            `}
+                            <button onclick="showDetails('${nft.tokenId}')" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 py-2 rounded-lg font-medium transition-colors text-sm">
+                                View Details
+                            </button>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        async function verifyOwnership() {
+            try {
+                if (!signer) {
+                    showError('Please connect wallet first');
+                    return;
+                }
+
+                const message = `I verify ownership of DARA Research NFTs for wallet ${userAddress}`;
+                const signature = await signer.signMessage(message);
+                
+                // Verify signature
+                const recovered = ethers.utils.verifyMessage(message, signature);
+                if (recovered.toLowerCase() === userAddress) {
+                    isVerified = true;
+                    showError('✅ Ownership verified!');
+                    setTimeout(() => document.getElementById('errorMessage').classList.add('hidden'), 2000);
+                    await loadNFTs(); /            box-shadow: 0 10px 40px -10px rgba(96, 165, 250, 0.3);
         }
         .network-badge {
             background: linear-gradient(135deg, #3b82f6 0%, #8b5cf6 100%);
@@ -1156,4 +1486,5 @@
 </body>
 
 </html>
+
 
